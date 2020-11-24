@@ -309,14 +309,18 @@ class Common(object):
             timer.cancel()
 
         # Check for possible additional output
-        for line in process.stdout.readlines():
-            line = line.decode('utf-8', errors='replace')
-            stdout += line
-            log('out', line.rstrip('\n'), 'yellow', level=3)
-        for line in [] if join else process.stderr.readlines():
-            line = line.decode('utf-8', errors='replace')
-            stderr += line
-            log('err', line.rstrip('\n'), 'yellow', level=3)
+        selected = select.select(descriptors, [], [], 1)
+        for descriptor in selected[0]:
+            if descriptor == process.stdout.fileno():
+                for line in process.stdout.readlines():
+                    line = line.decode('utf-8', errors='replace')
+                    stdout += line
+                    log('out', line.rstrip('\n'), 'yellow', level=3)
+            if not join and descriptor == process.stderr.fileno():
+                for line in process.stderr.readlines():
+                    line = line.decode('utf-8', errors='replace')
+                    stderr += line
+                    log('err', line.rstrip('\n'), 'yellow', level=3)
 
         # Handle the exit code, return output
         if process.returncode != 0:
