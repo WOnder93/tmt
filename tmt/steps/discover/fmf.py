@@ -34,17 +34,17 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
     changes to tests themselves (e.g. in a pull request CI).
 
     Related config options (all optional):
-    * modified_only - set to True if you want to filter modified tests
-    * reference_url - will be fetched as "reference" remote in the test dir
-    * reference_ref - the ref to compare against
+    * modified-only - set to True if you want to filter modified tests
+    * reference-url - will be fetched as "reference" remote in the test dir
+    * reference-ref - the ref to compare against
 
     Example to compare local repo against upstream master:
 
         discover:
             how: fmf
-            modified_only: True
-            reference_url: https://github.com/psss/tmt
-            reference_ref: reference/master
+            modified-only: True
+            reference-url: https://github.com/psss/tmt
+            reference-ref: reference/master
 
     Note that internally the modified tests are appended to the list specified
     via 'test', so those tests will also be selected even if not modified.
@@ -64,10 +64,10 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 '-r', '--ref', metavar='REVISION',
                 help='Branch, tag or commit specifying the git revision.'),
             click.option(
-                '-U', '--reference-url', metavar='REPOSITORY',
+                '--reference-url', metavar='REPOSITORY',
                 help='URL of the reference git repository with fmf metadata.'),
             click.option(
-                '-R', '--reference-ref', metavar='REVISION',
+                '--reference-ref', metavar='REVISION',
                 help='Branch, tag or commit specifying the reference git revision.'),
             click.option(
                 '-m', '--only-modified', is_flag=True,
@@ -88,7 +88,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         # Git revision defaults to master if url provided
         if option == 'ref' and self.get('url'):
             return 'master'
-        if option == 'reference_ref':
+        if option == 'reference-ref':
             return 'master'
         # No other defaults available
         return default
@@ -112,7 +112,7 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
                 self.data[key] = [self.data[key]]
 
         # Process command line options, apply defaults
-        for option in ['url', 'ref', 'reference_url', 'reference_ref', 'path',
+        for option in ['url', 'ref', 'reference-url', 'reference-ref', 'path',
                        'test', 'filter', 'only_modified']:
             value = self.opt(option)
             if value:
@@ -181,24 +181,24 @@ class DiscoverFmf(tmt.steps.discover.DiscoverPlugin):
         if names:
             self.info('names', fmf.utils.listed(names), 'green')
 
-        only_modified = self.get('only_modified')
-        ref_url = self.get('reference_url')
+        only_modified = self.get('modified-only')
+        ref_url = self.get('reference-url')
         if ref_url:
-            self.info('reference_url', ref_url, 'green')
+            self.info('reference-url', ref_url, 'green')
             self.debug(f"Fetch also '{ref_url}' as 'reference'.")
             self.run(['git', 'remote', 'add', 'reference', ref_url],
                      cwd=testdir, shell=False)
             self.run(['git', 'fetch', 'reference'], cwd=testdir, shell=False)
         if only_modified:
-            reference_ref = self.get('reference_ref')
-            self.info('reference_ref', reference_ref, 'green')
+            reference_ref = self.get('reference-ref')
+            self.info('reference-ref', reference_ref, 'green')
             output = self.run(['git', 'log', '--format=', '--stat',
                                '--name-only', f"{reference_ref}..HEAD"],
                               cwd=testdir, shell=False)[0]
             modified = set(f"^/{re.escape(name)}$"
                            for name in map(os.path.dirname, output.split('\n'))
                            if name)
-            self.debug(f"Limit to modified test dirs: {modified}")
+            self.debug(f"Limit to modified test dirs: {modified}", level=3)
             names.extend(modified)
 
         # Initialize the metadata tree, search for available tests
